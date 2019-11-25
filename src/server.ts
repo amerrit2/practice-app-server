@@ -3,7 +3,8 @@ import * as https from 'https';
 import * as fs from 'fs';
 import * as path from 'path';
 import { onError, onListening, normalizePort } from './server_helpers';
-import { createDbClient } from './db_access';
+import { DBClient } from './database/db_client';
+
 
 const port = normalizePort(process.env.PORT || 5000);
 
@@ -28,7 +29,19 @@ server.listen(port, () => {
 // Configure
 
 app.get("/", (req, res) => {
+  console.log('REQUEST: ', req.url, req.body, req.cookies);
   res.send('What');
 });
 
-createDbClient();
+const db = new DBClient();
+
+db.connect().then(async () => {
+  console.log('Adding user adam');
+  const addUserResult = await db.addUser('bob', 'myPassword');
+
+  console.log('Add user result: ', JSON.stringify(addUserResult, null, 2));
+
+  const result = await db.updateUserData('adam', 'someKey', { someProp: 'someValue' });
+
+  console.log('result: ', JSON.stringify(result, null, 2));
+});
