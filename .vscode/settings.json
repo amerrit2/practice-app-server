@@ -1,0 +1,17 @@
+{
+    "eslint.autoFixOnSave": true,
+    "eslint.nodePath": "../node_modules/.bin/eslint",
+    "eslint.options": {
+        "configFile": "../eslintrc.json"
+    },
+    "typescript.tsdk": "node_modules\\typescript\\lib",
+    "eslint.enable": true,
+    "files.exclude": {
+        "**/*.js": {
+            "when": "$(basename).ts"
+        },
+        "**/*.map": {
+            "when": "$(basename).ts"
+        }
+    }
+}

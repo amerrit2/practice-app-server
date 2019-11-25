@@ -1,0 +1,37 @@
+{
+  "name": "practice-app-server",
+  "version": "1.0.0",
+  "description": "Practice server for Kotlin Android",
+  "main": "src/server.js",
+  "scripts": {
+    "test": "test",
+    "start": "cross-env DATABASE_URL=postgres://tenwhgpjpoprrx:7f83d2cf5fc8e987d925eb90e0eddfff3350bd25979d696ae6767d3936b7cf1a@ec2-107-20-155-148.compute-1.amazonaws.com:5432/dcudq4hf7pa34d node ./src/server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/amerrit2/practice-app-server.git"
+  },
+  "author": "adam.merritt",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/amerrit2/practice-app-server/issues"
+  },
+  "homepage": "https://github.com/amerrit2/practice-app-server#readme",
+  "dependencies": {
+    "bcrypt": "^3.0.7",
+    "express": "^4.17.1",
+    "pg": "^7.14.0"
+  },
+  "devDependencies": {
+    "@types/bcrypt": "^3.0.0",
+    "@types/express": "^4.17.2",
+    "@types/pg": "^7.11.2",
+    "@typescript-eslint/eslint-plugin": "^2.8.0",
+    "@typescript-eslint/parser": "^2.8.0",
+    "cross-env": "^6.0.3",
+    "eslint": "^6.7.0",
+    "eslint-config-airbnb-base": "^14.0.0",
+    "eslint-plugin-import": "^2.18.2",
+    "typescript": "^3.7.2"
+  }
+}
