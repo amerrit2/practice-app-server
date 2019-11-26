@@ -4,7 +4,7 @@
   "description": "Practice server for Kotlin Android",
   "main": "src/server.js",
   "scripts": {
-    "build": "tsc .",
+    "build": "tsc --build tsconfig.json",
     "test": "test",
     "start": "node ./src/server.js"
   },
