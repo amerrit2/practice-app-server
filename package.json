@@ -4,8 +4,9 @@
   "description": "Practice server for Kotlin Android",
   "main": "src/server.js",
   "scripts": {
+    "build": "tsc .",
     "test": "test",
-    "start": "cross-env DATABASE_URL=postgres://tenwhgpjpoprrx:7f83d2cf5fc8e987d925eb90e0eddfff3350bd25979d696ae6767d3936b7cf1a@ec2-107-20-155-148.compute-1.amazonaws.com:5432/dcudq4hf7pa34d node ./src/server.js"
+    "start": "node ./src/server.js"
   },
   "repository": {
     "type": "git",
