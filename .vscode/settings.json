@@ -11,7 +11,8 @@
             "when": "$(basename).ts"
         },
         "**/*.map": {
-            "when": "$(basename).ts"
+            "when": "$(basename)"
         }
-    }
+    },
+    "debug.node.autoAttach": "on",
 }

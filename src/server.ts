@@ -1,14 +1,16 @@
-import * as Express from 'express';
+import * as express from 'express';
+import * as session from 'express-session';
 import * as https from 'https';
 import * as fs from 'fs';
-import * as path from 'path';
+import * as connectPg from 'connect-pg-simple';
+import * as bodyParser from 'body-parser';
 import { onError, onListening, normalizePort } from './server_helpers';
 import { DBClient } from './database/db_client';
-
+import logger from './logger';
 
 const port = normalizePort(process.env.PORT || 5000);
 
-const app = Express();
+const app = express();
 app.set('port', port);
 
 const options = {
@@ -25,23 +27,31 @@ server.listen(port, () => {
   console.log(`Listen callback. port=${port}`);
 });
 
-
 // Configure
-
-app.get("/", (req, res) => {
-  console.log('REQUEST: ', req.url, req.body, req.cookies);
-  res.send('What');
-});
-
 const db = new DBClient();
+const pgSession = connectPg(session);
 
 db.connect().then(async () => {
-  console.log('Adding user adam');
-  const addUserResult = await db.addUser('bob', 'myPassword');
+  app.use(session({
+    store: new pgSession({ pool: db.pool, }),
+    secret: process.env.APP_COOKIE_SECRET || 'cookie_secret',
+    resave: false,
+    cookie: { maxAge: 30 * 24 * 60 * 60 * 1000, secure: true }, // 30 days,
+    saveUninitialized: true,
+  }));
 
-  console.log('Add user result: ', JSON.stringify(addUserResult, null, 2));
+  app.get("/", (req, res) => {
+    logger.info('Received request: ', { url: req.url, head: req.header, body: req.body, session: req.session });
 
-  const result = await db.updateUserData('adam', 'someKey', { someProp: 'someValue' });
+    if (req.session) {
+      req.session.count = (req.session.count ?? 0) + 1;
+    } else {
+      logger.error('res.session is undefined');
+    }
 
-  console.log('result: ', JSON.stringify(result, null, 2));
-});
+    req.session?.save(err => err && logger.error('Failed to save session.', err));
+
+    res.send(`Thank you for your GET request.  It was number ${req.session?.count}`);
+    res.end();
+  });
+}).catch(e => { throw e });

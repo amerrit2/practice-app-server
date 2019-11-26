@@ -1,5 +1,9 @@
-import { Client } from 'pg';
-import { queryUserInfo, queryAddUser, createTablesIfNotExists, queryUpdateData } from './queries';
+import { Pool } from 'pg';
+import { queryGetUser, queryAddUser, createTablesIfNotExists, queryUpdateData, queryDeleteUser, queryGetUserData } from './queries';
+import logger from '../logger';
+import * as assert from 'assert';
+
+const DATABASE_URL = process.env.DATABASE_URL;
 
 interface DbResponse {
     type: "success" | "failure";
@@ -7,13 +11,30 @@ interface DbResponse {
     message?: string;
 }
 
+function makeSuccessResponse(data?: any): DbResponse {
+    return {
+        type: 'success',
+        data,
+    };
+}
+
+function makeErrorResponse(message?: string, data?: any): DbResponse {
+    return {
+        type: 'failure',
+        message,
+        data,
+    };
+}
+
 export class DBClient {
-    private _client: Client;
+    public pool: Pool;
     private _isConnected: boolean = false;
 
     constructor() {
-        this._client = new Client({
-            connectionString: process.env.DATABASE_URL,
+        assert(typeof DATABASE_URL === 'string', 'env.DATABASE_URL must be a string');
+
+        this.pool = new Pool({
+            connectionString: DATABASE_URL,
             ssl: true,
         });
     }
@@ -24,8 +45,8 @@ export class DBClient {
         }
 
         try {
-            await this._client.connect();
-            await createTablesIfNotExists(this._client);
+            await this.pool.connect();
+            await createTablesIfNotExists(this.pool);
         } catch (e) {
             console.log(`Failed to connect to db. e=${e.message}`);
             throw e;
@@ -40,63 +61,73 @@ export class DBClient {
         }
     }
 
-    async getUserInfo(username: string): Promise<DbResponse> {
+    async getUser(username: string): Promise<DbResponse> {
+        logger.info('Getting user info: ', { username });
         this._checkConnection();
-        const userInfo = await queryUserInfo(this._client, username);
+        const userInfo = await queryGetUser(this.pool, username);
 
         if (userInfo) {
-            return {
-                type: 'success',
-                data: userInfo
-            };
+            return makeSuccessResponse(userInfo);
         }
 
-        return {
-            type: 'failure',
-            message: `Failed to find username=${username}`,
-        };
+        return makeErrorResponse(`Failed to find username=${username}`);
     }
 
-    async addUser(username: string, password: string): Promise<DbResponse> {
+    async addUser(username: string, email: string, password: string): Promise<DbResponse> {
+        logger.info('Adding user: ', { username, email });
         this._checkConnection();
 
-        const existingUser = await queryUserInfo(this._client, username);
+        const existingUser = await queryGetUser(this.pool, username);
 
         if (existingUser) {
-            return {
-                type: 'failure',
-                message: 'Failed to add user. Username already exists',
-            };
+            return makeErrorResponse(`Failed to add user [${username}]. Already exists`);
         }
 
-        const addResult = await queryAddUser(this._client, username, password);
+        const addResult = await queryAddUser(this.pool, username, email, password);
 
         if (addResult === true) {
-            return {
-                type: 'success',
-            };
+            return makeSuccessResponse();
         }
 
-        return {
-            type: 'failure',
-            message: addResult
-        };
+        return makeErrorResponse(addResult);
+    }
+
+    async deleteUser(username: string): Promise<DbResponse> {
+        logger.info('Deleting user: ', { username });
+        this._checkConnection();
+
+        const result = await queryDeleteUser(this.pool, username);
+
+        if (result === true) {
+            return makeSuccessResponse();
+        }
+
+        return makeErrorResponse(result);
+    }
+
+    async getUserData(username: string, keys: string[]) {
+        logger.info('Getting user data', { username, keys });
+        this._checkConnection();
+
+        const userDataResult = await queryGetUserData(this.pool, username, keys);
+
+        if (userDataResult) {
+            return makeSuccessResponse(userDataResult);
+        }
+
+        return makeErrorResponse(`Failed to find user data for ${username}:${keys.join(',')}`);
     }
 
     async updateUserData(username: string, key: string, data: any): Promise<DbResponse> {
+        logger.info('Updating user data: ', { username, key, data });
         this._checkConnection();
 
-        const result = await queryUpdateData(this._client, username, key, data);
+        const result = await queryUpdateData(this.pool, username, key, data);
 
         if (result === true) {
-            return {
-                type: 'success',
-            };
+            return makeSuccessResponse();
         }
 
-        return {
-            type: 'failure',
-            message: result,
-        };
+        return makeErrorResponse(result);
     };
 }
