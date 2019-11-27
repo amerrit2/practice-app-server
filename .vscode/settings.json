@@ -1,9 +1,12 @@
 {
     "eslint.autoFixOnSave": true,
-    "eslint.nodePath": "../node_modules/.bin/eslint",
     "eslint.options": {
-        "configFile": "../eslintrc.json"
+        "config": "./.eslintrc.json"
     },
+    "eslint.validate": [
+        { "language": "typescript", "autoFix": true },
+        { "language": "typescriptreact", "autoFix": true } 
+    ],
     "typescript.tsdk": "node_modules\\typescript\\lib",
     "eslint.enable": true,
     "files.exclude": {
@@ -13,6 +16,5 @@
         "**/*.map": {
             "when": "$(basename)"
         }
-    },
-    "debug.node.autoAttach": "on",
+    }
 }

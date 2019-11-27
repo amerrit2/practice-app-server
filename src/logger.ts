@@ -5,20 +5,19 @@ const logger = createLogger({
     transports: [],
 });
 
-
 const alignedWithColorsAndTime = format.combine(
     format.colorize(),
     format.metadata(),
     format.printf(info => {
         if (Object.keys(info.metadata).length === 0) {
-            return `${info.level}: ${info.message}`
+            return `${info.level}: ${info.message}`;
         }
 
-        return `${info.level}: ${info.message} | ${JSON.stringify(info.metadata, null, 2)}`
+        return `${info.level}: ${info.message} | ${JSON.stringify(info.metadata, null, 0)}`;
     }),
 );
 
-if (process.env.NODE_ENV !== 'production') {
+if (true /* process.env.NODE_ENV !== 'production' */) {
     logger.add(new transports.Console({
         format: alignedWithColorsAndTime,
     }));

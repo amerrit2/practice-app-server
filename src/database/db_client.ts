@@ -1,12 +1,19 @@
 import { Pool } from 'pg';
-import { queryGetUser, queryAddUser, createTablesIfNotExists, queryUpdateData, queryDeleteUser, queryGetUserData } from './queries';
-import logger from '../logger';
 import * as assert from 'assert';
+import {
+    queryGetUser,
+    queryAddUser,
+    createTablesIfNotExists,
+    queryAddUpdateUserData,
+    queryDeleteUser,
+    queryGetUserData,
+} from './queries';
+import logger from '../logger';
 
-const DATABASE_URL = process.env.DATABASE_URL;
+const { DATABASE_URL } = process.env;
 
 interface DbResponse {
-    type: "success" | "failure";
+    type: 'success' | 'failure';
     data?: any;
     message?: string;
 }
@@ -26,7 +33,7 @@ function makeErrorResponse(message?: string, data?: any): DbResponse {
     };
 }
 
-export class DBClient {
+class DBClient {
     public pool: Pool;
     private _isConnected: boolean = false;
 
@@ -39,7 +46,7 @@ export class DBClient {
         });
     }
 
-    async connect() {
+    async connectIfNeeded() {
         if (this._isConnected) {
             return;
         }
@@ -48,22 +55,16 @@ export class DBClient {
             await this.pool.connect();
             await createTablesIfNotExists(this.pool);
         } catch (e) {
-            console.log(`Failed to connect to db. e=${e.message}`);
+            logger.error(`Failed to connect to db. e=${e.message}`);
             throw e;
         }
 
         this._isConnected = true;
     }
 
-    private _checkConnection() {
-        if (!this._isConnected) {
-            throw new Error("DB is not connected");
-        }
-    }
-
     async getUser(username: string): Promise<DbResponse> {
         logger.info('Getting user info: ', { username });
-        this._checkConnection();
+        await this.connectIfNeeded();
         const userInfo = await queryGetUser(this.pool, username);
 
         if (userInfo) {
@@ -75,7 +76,7 @@ export class DBClient {
 
     async addUser(username: string, email: string, password: string): Promise<DbResponse> {
         logger.info('Adding user: ', { username, email });
-        this._checkConnection();
+        await this.connectIfNeeded();
 
         const existingUser = await queryGetUser(this.pool, username);
 
@@ -94,7 +95,7 @@ export class DBClient {
 
     async deleteUser(username: string): Promise<DbResponse> {
         logger.info('Deleting user: ', { username });
-        this._checkConnection();
+        await this.connectIfNeeded();
 
         const result = await queryDeleteUser(this.pool, username);
 
@@ -107,7 +108,7 @@ export class DBClient {
 
     async getUserData(username: string, keys: string[]) {
         logger.info('Getting user data', { username, keys });
-        this._checkConnection();
+        await this.connectIfNeeded();
 
         const userDataResult = await queryGetUserData(this.pool, username, keys);
 
@@ -118,16 +119,20 @@ export class DBClient {
         return makeErrorResponse(`Failed to find user data for ${username}:${keys.join(',')}`);
     }
 
-    async updateUserData(username: string, key: string, data: any): Promise<DbResponse> {
-        logger.info('Updating user data: ', { username, key, data });
-        this._checkConnection();
+    async addUpdateUserData(username: string, key: string, data: any): Promise<DbResponse> {
+        logger.info('Adding/Updating user data: ', { username, key, data });
+        await this.connectIfNeeded();
 
-        const result = await queryUpdateData(this.pool, username, key, data);
+        const result = await queryAddUpdateUserData(this.pool, username, key, data);
 
         if (result === true) {
             return makeSuccessResponse();
         }
 
         return makeErrorResponse(result);
-    };
+    }
 }
+
+const dbClient = new DBClient();
+
+export default dbClient;

@@ -2,7 +2,6 @@ import { Pool } from 'pg';
 import * as bcrypt from 'bcrypt';
 import Validator from 'validator';
 import * as assert from 'assert';
-import { query } from 'winston';
 
 export interface UserInfoRow {
     username: string;
@@ -27,7 +26,7 @@ const createUserInfoTableText = `
         password_hash varchar NOT NULL,
         PRIMARY KEY (username, user_id)
     );
-`
+`;
 
 const createUserDataTableText = `
     CREATE TABLE IF NOT EXISTS user_data(
@@ -36,11 +35,11 @@ const createUserDataTableText = `
         data_json jsonb NOT NULL,
         PRIMARY KEY (username, data_key)
     );
-`
+`;
 
-export async function createTablesIfNotExists(client: Pool) {
-    await client.query(createUserInfoTableText);
-    await client.query(createUserDataTableText);
+export async function createTablesIfNotExists(pool: Pool) {
+    await pool.query(createUserInfoTableText);
+    await pool.query(createUserDataTableText);
 }
 
 export async function queryGetUser(pool: Pool, username: string): Promise<UserInfoRow | null> {
@@ -56,13 +55,15 @@ export async function queryGetUser(pool: Pool, username: string): Promise<UserIn
     }
 }
 
-export async function queryAddUser(pool: Pool, username: string, email: string, password: string): Promise<string | true> {
-    const password_hash = await bcrypt.hash(password, 10);
+export async function queryAddUser(
+    pool: Pool, username: string, email: string, password: string,
+): Promise<string | true> {
+    const passwordHash = await bcrypt.hash(password, 10);
 
     try {
         assert(Validator.isEmail(email), `Email [${email}] is invalid`);
         const result = await pool.query('INSERT INTO user_info(username, email, password_hash) VALUES($1, $2, $3)',
-            [username, email, password_hash]);
+            [username, email, passwordHash]);
 
         if (result.rowCount !== 1) {
             // Don't know when this can happen
@@ -83,7 +84,6 @@ export async function queryDeleteUser(pool: Pool, username: string): Promise<str
         }
 
         return true;
-
     } catch (e) {
         return e.message;
     }
@@ -94,7 +94,9 @@ export async function queryDeleteUser(pool: Pool, username: string): Promise<str
  * Either creates new username-key combo if doesn't exist, or replaces existing username-key combo
  * with new json data
  */
-export async function queryUpdateData(pool: Pool, username: string, key: string, data: any): Promise<string | true> {
+export async function queryAddUpdateUserData(
+    pool: Pool, username: string, key: string, data: any,
+): Promise<string | true> {
     const dataResult = await pool.query('SELECT data_key FROM user_data WHERE username=$1 AND data_key=$2',
         [username, key]);
 
@@ -126,7 +128,9 @@ export async function queryUpdateData(pool: Pool, username: string, key: string,
     }
 }
 
-export async function queryGetUserData(pool: Pool, username: string, keys: string[]): Promise<any | null> {
+export async function queryGetUserData(
+    pool: Pool, username: string, keys: string[],
+): Promise<any | null> {
     const dataJsons: { [index: string]: any } = {};
 
     try {
@@ -139,7 +143,7 @@ export async function queryGetUserData(pool: Pool, username: string, keys: strin
                     dataJsons[key] = null;
                     break;
                 case 1:
-                    dataJsons[key] = result.rows[0];
+                    [dataJsons[key]] = result.rows;
                     break;
                 default:
                     throw new Error(`Expected username-key to be unique but found multiple rows for ${username}-${key}`);
@@ -147,8 +151,7 @@ export async function queryGetUserData(pool: Pool, username: string, keys: strin
         }
 
         return dataJsons;
-    }
-    catch (e) {
+    } catch (e) {
         return e.message;
     }
 }

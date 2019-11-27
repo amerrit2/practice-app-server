@@ -1,57 +1,45 @@
 import * as express from 'express';
 import * as session from 'express-session';
-import * as https from 'https';
-import * as fs from 'fs';
 import * as connectPg from 'connect-pg-simple';
 import * as bodyParser from 'body-parser';
-import { onError, onListening, normalizePort } from './server_helpers';
-import { DBClient } from './database/db_client';
+import * as serveFavicon from 'serve-favicon';
+import * as path from 'path';
+import { onListening, onError, getPort } from './server_helpers';
+import dbClient from './database/db_client';
 import logger from './logger';
-
-const port = normalizePort(process.env.PORT || 5000);
+import { makeRouter } from './router';
 
 const app = express();
+
+const port = getPort();
+logger.info(`Setting "port" to [${port}]`);
 app.set('port', port);
 
-const options = {
-  key: fs.readFileSync('./src/ssl/key.pem'),
-  cert: fs.readFileSync('./src/ssl/cert.pem'),
-};
+// Parsing Plugins
+// support parsing of application/json type post data
+app.use(bodyParser.json());
+// support parsing of application/x-www-form-urlencoded post data
+app.use(bodyParser.urlencoded({ extended: true }));
 
-const server = https.createServer(options, app);
+app.use(serveFavicon(path.join(__dirname, 'favicon.ico')));
 
-server.on('error', (error: any) => onError(port, error));
-server.on('listening', () => onListening(server));
-
-server.listen(port, () => {
-  console.log(`Listen callback. port=${port}`);
+// Log all requests
+app.use((req, __, next) => {
+    logger.info(`Received request: url=${req.originalUrl}`);
+    next();
 });
 
-// Configure
-const db = new DBClient();
-const pgSession = connectPg(session);
-
-db.connect().then(async () => {
-  app.use(session({
-    store: new pgSession({ pool: db.pool, }),
+// Configure Session Manager
+const PgSession = connectPg(session);
+app.use(session({
+    store: new PgSession({ pool: dbClient.pool }),
     secret: process.env.APP_COOKIE_SECRET || 'cookie_secret',
     resave: false,
     cookie: { maxAge: 30 * 24 * 60 * 60 * 1000, secure: true }, // 30 days,
     saveUninitialized: true,
-  }));
+}));
 
-  app.get("/", (req, res) => {
-    logger.info('Received request: ', { url: req.url, head: req.header, body: req.body, session: req.session });
+app.use(makeRouter());
 
-    if (req.session) {
-      req.session.count = (req.session.count ?? 0) + 1;
-    } else {
-      logger.error('res.session is undefined');
-    }
-
-    req.session?.save(err => err && logger.error('Failed to save session.', err));
-
-    res.send(`Thank you for your GET request.  It was number ${req.session?.count}`);
-    res.end();
-  });
-}).catch(e => { throw e });
+// Start server
+app.listen(port, () => onListening(port)).on('error', err => onError(port, err));

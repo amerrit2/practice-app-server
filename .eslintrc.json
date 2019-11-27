@@ -21,6 +21,23 @@
     "rules": {
         "no-var": "error",
         "no-trailing-spaces": "error",
-        "no-multiple-empty-lines": "error"
+        "no-multiple-empty-lines": "error",
+        "indent": [
+            "error",
+            4,
+            {
+                "SwitchCase": 1
+            }
+        ],
+        "no-unused-vars": "warn",
+        "arrow-parens": "off",
+        "no-unused-expressions": "off",
+        "no-restricted-globals": "off",
+        "import/prefer-default-export": "off",
+        "lines-between-class-members": "off",
+        "no-underscore-dangle": "off",
+        "no-restricted-syntax": "off",
+        "no-await-in-loop": "off",
+        "camelcase": "off"
     }
 }
