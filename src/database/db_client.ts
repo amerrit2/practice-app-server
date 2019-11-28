@@ -1,5 +1,5 @@
 import { Pool } from 'pg';
-import * as assert from 'assert';
+import assert from 'assert';
 import {
     queryGetUser,
     queryAddUser,
@@ -8,7 +8,7 @@ import {
     queryDeleteUser,
     queryGetUserData,
 } from './queries';
-import logger from '../logger';
+import logger from '../util/logger';
 
 const { DATABASE_URL } = process.env;
 

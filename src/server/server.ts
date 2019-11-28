@@ -1,13 +1,13 @@
-import * as express from 'express';
-import * as session from 'express-session';
-import * as connectPg from 'connect-pg-simple';
-import * as bodyParser from 'body-parser';
-import * as serveFavicon from 'serve-favicon';
-import * as path from 'path';
+import express from 'express';
+import session from 'express-session';
+import connectPg from 'connect-pg-simple';
+import bodyParser from 'body-parser';
+import serveFavicon from 'serve-favicon';
+import path from 'path';
 import { onListening, onError, getPort } from './server_helpers';
-import dbClient from './database/db_client';
-import logger from './logger';
-import { makeRouter } from './router';
+import dbClient from '../database/db_client';
+import logger from '../util/logger';
+import { makeRouter } from '../service/router';
 
 const app = express();
 

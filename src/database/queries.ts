@@ -1,7 +1,7 @@
-import { Pool } from 'pg';
-import * as bcrypt from 'bcrypt';
+import bcrypt from 'bcrypt';
 import Validator from 'validator';
-import * as assert from 'assert';
+import assert from 'assert';
+import { Pool } from 'pg';
 
 export interface UserInfoRow {
     username: string;
@@ -10,10 +10,22 @@ export interface UserInfoRow {
     password_hash: string;
 }
 
+export interface UserInfo {
+    username: string;
+    email: string;
+    password?: string;
+}
+
 export interface UserDataRow {
     username: string;
     data_key: string;
     data_json: any;
+}
+
+export interface UserData {
+    username: string;
+    dataKey: string;
+    dataJson: any;
 }
 
 const createUserInfoTableText = `

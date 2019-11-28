@@ -29,7 +29,6 @@
                 "SwitchCase": 1
             }
         ],
-        "no-unused-vars": "warn",
         "arrow-parens": "off",
         "no-unused-expressions": "off",
         "no-restricted-globals": "off",
@@ -38,6 +37,13 @@
         "no-underscore-dangle": "off",
         "no-restricted-syntax": "off",
         "no-await-in-loop": "off",
-        "camelcase": "off"
+        "camelcase": "off",
+        "linebreak-style": ["error", "windows"],
+        "no-unused-vars": "off",
+        "@typescript-eslint/no-unused-vars": ["warn", {
+            "vars": "all",
+            "args": "after-used",
+            "ignoreRestSiblings": false
+        }]
     }
 }

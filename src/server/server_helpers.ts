@@ -1,4 +1,4 @@
-import logger from './logger';
+import logger from '../util/logger';
 
 export function getPort(): number | string {
     const port = process.env.PORT || 5000;
