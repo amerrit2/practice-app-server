@@ -2,11 +2,13 @@
   "name": "practice-app-server",
   "version": "1.0.0",
   "description": "Practice server for Kotlin Android",
-  "main": "src/server.js",
+  "main": "src/server/server.js",
   "scripts": {
     "build": "tsc --build tsconfig.json",
     "test": "test",
-    "start": "node ./src/server.js"
+    "start": "node ./src/server/server.js",
+    "psql": "heroku pg:psql -a practice-app-service",
+    "logTail": "heroku logs -a practice-app-service --tail"
   },
   "repository": {
     "type": "git",
