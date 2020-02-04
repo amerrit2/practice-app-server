@@ -8,7 +8,8 @@
     "test": "test",
     "start": "node ./src/server/server.js",
     "psql": "heroku pg:psql -a practice-app-service",
-    "logTail": "heroku logs -a practice-app-service --tail"
+    "logTail": "heroku logs -a practice-app-service --tail",
+    "watch": "tsc --build tsconfig.json --watch"
   },
   "repository": {
     "type": "git",
